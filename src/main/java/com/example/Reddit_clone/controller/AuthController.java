@@ -16,7 +16,7 @@ import static org.springframework.http.HttpStatus.OK;
 public class AuthController {
 
     private final AuthService authService;
-
+    //invoked whenever a POST request is made to register the user’s in our application
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RegisterRequest registerRequest)  {
             authService.signup(registerRequest);
