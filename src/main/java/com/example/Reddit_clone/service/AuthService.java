@@ -1,6 +1,7 @@
 package com.example.Reddit_clone.service;
 import com.example.Reddit_clone.dto.RegisterRequest;
 
+import com.example.Reddit_clone.exceptions.SpringRedditException;
 import com.example.Reddit_clone.model.NotificationEmail;
 import com.example.Reddit_clone.model.User;
 import com.example.Reddit_clone.model.VerificationToken;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.time.Instant.now;
@@ -38,7 +40,7 @@ public class AuthService {
         user.setEnabled(false);
 
         userRepository.save(user);
-       String token= generateVerificationToken(user);
+        String token= generateVerificationToken(user);
         mailService.sendMail(new NotificationEmail("Please activate your account",user.getEmail(),
                 "please click on the below url to activate your account: " + "http://localhost:8080/api/auth/accountVerification/"+token));
     }
@@ -56,4 +58,20 @@ public class AuthService {
     private String encodePassword(String password) {
         return passwordEncoder.encode(password);
     }
+
+    public void  verifyAccount(String token){
+      Optional<VerificationToken> verificationToken = verificationTokenRepository.findByToken(token);
+      verificationToken.orElseThrow(() -> new SpringRedditException("Invalid Token"));
+      fetchUserAndEnable(verificationToken.get());
+    }
+
+    @Transactional
+    public void fetchUserAndEnable(VerificationToken verificationToken){
+        String username = verificationToken.getUser().getUsername(); // get the username associated with the verificationToken
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new SpringRedditException("User not found with name - " + username));
+        user.setEnabled(true); // give the user permission to log in
+        userRepository.save(user); // save the user to database
+
+    }
+
 }
