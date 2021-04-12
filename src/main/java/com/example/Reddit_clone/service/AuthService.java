@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.time.Instant.now;
@@ -58,11 +59,17 @@ public class AuthService {
         return passwordEncoder.encode(password);
     }
 
+    public void  verifyAccount(String token){
+      Optional<VerificationToken> verificationToken = verificationTokenRepository.findByToken(token);
+      verificationToken.orElseThrow(() -> new SpringRedditException("Invalid Token"));
+      fetchUserAndEnable(verificationToken.get());
+    }
+
     @Transactional
-    private void fetchUserAndEnable(VerificationToken verificationToken){
-        String username = verificationToken.getUser().getUsername(); // Get the username associated with the verificationToken
+    public void fetchUserAndEnable(VerificationToken verificationToken){
+        String username = verificationToken.getUser().getUsername(); // get the username associated with the verificationToken
         User user = userRepository.findByUsername(username).orElseThrow(() -> new SpringRedditException("User not found with name - " + username));
-        user.setEnabled(true); // Give the user permission to log in
+        user.setEnabled(true); // give the user permission to log in
         userRepository.save(user); // save the user to database
 
     }
