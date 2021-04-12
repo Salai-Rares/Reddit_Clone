@@ -1,6 +1,7 @@
 package com.example.Reddit_clone.service;
 import com.example.Reddit_clone.dto.RegisterRequest;
 
+import com.example.Reddit_clone.exceptions.SpringRedditException;
 import com.example.Reddit_clone.model.NotificationEmail;
 import com.example.Reddit_clone.model.User;
 import com.example.Reddit_clone.model.VerificationToken;
@@ -38,7 +39,7 @@ public class AuthService {
         user.setEnabled(false);
 
         userRepository.save(user);
-       String token= generateVerificationToken(user);
+        String token= generateVerificationToken(user);
         mailService.sendMail(new NotificationEmail("Please activate your account",user.getEmail(),
                 "please click on the below url to activate your account: " + "http://localhost:8080/api/auth/accountVerification/"+token));
     }
@@ -56,4 +57,14 @@ public class AuthService {
     private String encodePassword(String password) {
         return passwordEncoder.encode(password);
     }
+
+    @Transactional
+    private void fetchUserAndEnable(VerificationToken verificationToken){
+        String username = verificationToken.getUser().getUsername(); // Get the username associated with the verificationToken
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new SpringRedditException("User not found with name - " + username));
+        user.setEnabled(true); // Give the user permission to log in
+        userRepository.save(user); // save the user to database
+
+    }
+
 }
