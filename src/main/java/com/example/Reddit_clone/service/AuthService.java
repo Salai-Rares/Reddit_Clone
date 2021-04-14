@@ -1,4 +1,6 @@
 package com.example.Reddit_clone.service;
+import com.example.Reddit_clone.dto.AuthenticationResponse;
+import com.example.Reddit_clone.dto.LoginRequest;
 import com.example.Reddit_clone.dto.RegisterRequest;
 
 import com.example.Reddit_clone.exceptions.SpringRedditException;
@@ -9,6 +11,10 @@ import com.example.Reddit_clone.repository.UserRepository;
 import com.example.Reddit_clone.repository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +31,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
 
@@ -57,6 +65,14 @@ public class AuthService {
 
     private String encodePassword(String password) {
         return passwordEncoder.encode(password);
+    }
+
+    public AuthenticationResponse login(LoginRequest loginRequest) {
+        Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(),
+                loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authenticate);
+        String authenticationToken = jwtProvider.generateToken(authenticate);
+        return new AuthenticationResponse(authenticationToken, loginRequest.getUsername());
     }
 
     public void  verifyAccount(String token){
