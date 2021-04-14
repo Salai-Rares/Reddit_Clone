@@ -18,6 +18,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
+    //Whenever we autowire AuthenticationManager, Spring finds this bean and injects it into our class
+    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
     /*
     Here, we are configuring Spring to allow all the requests which match the endpoint “/api/auth/**”
      as these endpoints are used for authentication and registration
