@@ -1,4 +1,4 @@
-package com.example.Reddit_clone.service;
+package com.example.Reddit_clone.security;
 
 import com.example.Reddit_clone.exceptions.SpringRedditException;
 import io.jsonwebtoken.Claims;

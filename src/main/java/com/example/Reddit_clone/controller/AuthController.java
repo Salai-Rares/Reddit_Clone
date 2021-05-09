@@ -4,7 +4,6 @@ import com.example.Reddit_clone.dto.LoginRequest;
 import com.example.Reddit_clone.dto.RegisterRequest;
 import com.example.Reddit_clone.service.AuthService;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
