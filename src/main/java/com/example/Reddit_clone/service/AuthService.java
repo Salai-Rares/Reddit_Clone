@@ -1,10 +1,12 @@
 package com.example.Reddit_clone.service;
 import com.example.Reddit_clone.dto.AuthenticationResponse;
 import com.example.Reddit_clone.dto.LoginRequest;
+import com.example.Reddit_clone.dto.RefreshTokenRequest;
 import com.example.Reddit_clone.dto.RegisterRequest;
 
 import com.example.Reddit_clone.exceptions.SpringRedditException;
 import com.example.Reddit_clone.model.NotificationEmail;
+import com.example.Reddit_clone.model.RefreshToken;
 import com.example.Reddit_clone.model.User;
 import com.example.Reddit_clone.model.VerificationToken;
 import com.example.Reddit_clone.repository.UserRepository;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,7 +41,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
-
+    private final RefreshTokenService refreshTokenService;
     //we are mapping the RegisterRequest object to the User object
     // and when setting the password, we are calling the encodePassword() method
     @Transactional
@@ -90,7 +93,12 @@ public class AuthService {
                 loginRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         String authenticationToken = jwtProvider.generateToken(authenticate);
-        return new AuthenticationResponse(authenticationToken, loginRequest.getUsername());
+        return AuthenticationResponse.builder().authenticationToken(authenticationToken)
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(loginRequest.getUsername())
+                .build();
+
     }
 
     public void  verifyAccount(String token){
@@ -119,5 +127,16 @@ public class AuthService {
     public boolean isLoggedIn() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return !(authentication instanceof AnonymousAuthenticationToken) && authentication.isAuthenticated();
+    }
+
+    public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
+        String token =  jwtProvider.generateTokenWithUserName(refreshTokenRequest.getUsername());
+        return AuthenticationResponse.builder()
+                .authenticationToken(token)
+                .refreshToken(refreshTokenRequest.getRefreshToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(refreshTokenRequest.getUsername())
+                .build();
     }
 }
