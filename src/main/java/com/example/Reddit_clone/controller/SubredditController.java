@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -18,13 +17,16 @@ public class SubredditController {
     private final SubredditService subredditService;
 
     @GetMapping
-    public List<SubredditDto> getAllSubreddits() {
-        return subredditService.getAll();
+    public ResponseEntity<List<SubredditDto>> getAllSubreddits() {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(subredditService.getAll());
     }
 
     @PostMapping
-    public SubredditDto create(@RequestBody @Valid SubredditDto subredditDto) {
-        return subredditService.save(subredditDto);
+    public ResponseEntity<SubredditDto> createSubreddit(@RequestBody SubredditDto subredditDto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(subredditService.save(subredditDto));
     }
 
     @GetMapping("/{id}")
